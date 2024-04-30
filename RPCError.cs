@@ -1,4 +1,4 @@
-﻿namespace jsonrpc.framework.net;
+﻿namespace jsonrpc;
 
 using System;
 
