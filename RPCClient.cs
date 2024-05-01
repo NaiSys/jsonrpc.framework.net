@@ -72,12 +72,12 @@ public partial class RPCClient
             }
             catch (HttpRequestException ex)
             {
-                Console.WriteLine($"Warning: Network Error - {ex.Message}");
-                HandleFailedRequests(requests, new RPCError(RPCErrorCode.NetworkError));
+                Debug.WriteLine($"Warning: Network Error - {ex.Message}");
+                HandleFailedRequests(requests, new RPCError(RPCErrorCode.NetworkError, "Unable to reach server host"));
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error: {ex.Message}");
+                Debug.WriteLine($"Error: {ex.Message}");
                 HandleFailedRequests(requests, new RPCError(RPCErrorCode.InternalError));
             }
         }
@@ -89,12 +89,22 @@ public partial class RPCClient
         {
             var results = Encoding.UTF8.GetString(data);
 
+            var json_res = JsonSerializer.Deserialize<object>(results);
+
+            foreach (var request in requests)
+            {
+
+                if (request.Callback != null)
+                {
+                    request.Callback(new RPCResponse {  });
+                }
+            }
             // Process results and invoke callbacks
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error handling data: {ex.Message}");
-            HandleFailedRequests(requests, new RPCError(RPCErrorCode.ParseError));
+            Debug.WriteLine($"Error handling data: {ex.Message}");
+            HandleFailedRequests(requests, new RPCError(RPCErrorCode.ParseError, "Received invalid JSON response", Encoding.UTF8.GetString(data)));
         }
     }
 
@@ -102,8 +112,9 @@ public partial class RPCClient
     {
         foreach (var request in requests)
         {
-            //TODO: Fix maybe null
-            request.Callback(new RPCResponse { Error = error });
+            if (request.Callback != null) {
+                request.Callback(new RPCResponse { Error = error });
+            }
         }
     }
 }
