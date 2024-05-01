@@ -3,6 +3,11 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using System.Diagnostics;
+using System.Text.Json.Serialization;
+using System.Collections;
+using System.Text.Json;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace jsonrpc;
 
@@ -31,18 +36,23 @@ public partial class RPCClient
     {
         foreach (var req in requests)
         {
-            var serializedReq = req.Serialize().ToString()?.ToArray();
-            //TODO: Fix maybe null
-            var payload = Encoding.UTF8.GetBytes(serializedReq ?? []);
+            var payload = req.Serialize();
 
             using var httpClient = new HttpClient();
             var serviceRequest = new HttpRequestMessage(HttpMethod.Post, serviceEndpoint)
             {
-                Content = new ByteArrayContent(payload)
+                Content = new StringContent(payload, Encoding.UTF8, "application/json")
             };
-            serviceRequest.Headers.Add("Content-Type", "application/json");
-            serviceRequest.Headers.Add("User-Agent", "dotNET-JSONRpc/1.0");
-            serviceRequest.Content.Headers.Add("Content-Length", payload.Length.ToString());
+            try {
+                serviceRequest.Headers.TryAddWithoutValidation("Content-Type", "application/json");
+                serviceRequest.Headers.TryAddWithoutValidation("User-Agent", "dotNET-JSONRpc/1.0");
+                serviceRequest.Content.Headers.ContentLength = payload.Length;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error: {ex.Message}");
+                HandleFailedRequests(requests, new RPCError(RPCErrorCode.InternalError));
+            }
 
             try
             {
