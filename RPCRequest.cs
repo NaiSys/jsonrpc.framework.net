@@ -2,6 +2,7 @@
 
 
 using System;
+using System.Text.Json;
 
 public delegate void RPCRequestCallback(RPCResponse response);
 
@@ -63,26 +64,16 @@ public class RPCRequest
         return $"RPCRequest: Method={Method}, Params={Params}, Id={Id}";
     }
 
-    public Dictionary<string, object> Serialize()
+    public string Serialize()
     {
-        var payload = new Dictionary<string, object>();
-        if (!string.IsNullOrEmpty(Version))
-        {
-            payload["jsonrpc"] = Version;
-        }
-        if (!string.IsNullOrEmpty(Method))
-        {
-            payload["method"] = Method;
-        }
-        if (Params != null)
-        {
-            payload["params"] = Params;
-        }
-        if (!string.IsNullOrEmpty(Id))
-        {
-            payload["id"] = Id;
-        }
-        return payload;
+        var payload = new { 
+            jsonrpc = Version,
+            method = Method,
+            id = Id,
+            @params = Params
+        };
+        var v = JsonSerializer.Serialize(payload);
+        return v;
     }
 
     ~RPCRequest()
