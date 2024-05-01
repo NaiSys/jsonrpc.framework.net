@@ -33,7 +33,7 @@ public partial class RPCClient
         {
             var serializedReq = req.Serialize().ToString()?.ToArray();
             //TODO: Fix maybe null
-            var payload = Encoding.UTF8.GetBytes(serializedReq);
+            var payload = Encoding.UTF8.GetBytes(serializedReq ?? []);
 
             using var httpClient = new HttpClient();
             var serviceRequest = new HttpRequestMessage(HttpMethod.Post, serviceEndpoint)

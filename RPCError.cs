@@ -86,7 +86,7 @@ public class RPCError
                 data = null;
             }
 
-            return new RPCError((RPCErrorCode)code, message, data);
+            return new RPCError((RPCErrorCode)code, message ?? "", data);
         }
         else
         {
