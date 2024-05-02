@@ -8,6 +8,7 @@ using System.Text.Json.Serialization;
 using System.Collections;
 using System.Text.Json;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Text.Json.Nodes;
 
 namespace jsonrpc;
 
@@ -85,26 +86,40 @@ public partial class RPCClient
 
     private void HandleData(byte[] data, List<RPCRequest> requests)
     {
+        Debug.WriteLine("Received response, handling data");
         try
         {
             var results = Encoding.UTF8.GetString(data);
 
-            var json_res = JsonSerializer.Deserialize<object>(results);
+            var json_res = JsonSerializer.Deserialize<Dictionary<string, object>>(results);
 
             foreach (var request in requests)
             {
-
-                if (request.Callback != null)
+                if (!json_res.TryGetValue("error", out var value))
                 {
-                    request.Callback(new RPCResponse {  });
+                    request.Callback?.Invoke(new RPCResponse
+                    {
+                        Id = json_res["id"].ToString(),
+                        Version = json_res["jsonrpc"].ToString(),
+                        Result = json_res["result"]
+                    });
+                }
+                else
+                {
+                    var temp = value.ToString();
+                    request.Callback?.Invoke(new RPCResponse
+                    {
+                        Id = json_res["id"].ToString(),
+                        Error = new RPCError(JsonSerializer.Deserialize<Dictionary<string, object>>(temp)),
+                        Version = json_res["jsonrpc"].ToString()
+                    });
                 }
             }
-            // Process results and invoke callbacks
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"Error handling data: {ex.Message}");
-            HandleFailedRequests(requests, new RPCError(RPCErrorCode.ParseError, "Received invalid JSON response", Encoding.UTF8.GetString(data)));
+            HandleFailedRequests(requests, new RPCError(code: RPCErrorCode.ParseError, ex.Message , data: Encoding.UTF8.GetString(data)));
         }
     }
 
