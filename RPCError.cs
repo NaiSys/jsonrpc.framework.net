@@ -43,9 +43,9 @@ public class RPCError
     {
     }
 
-    public RPCError(Dictionary<string, object> errorDict)
+    public RPCError(Dictionary<string, object>? errorDict)
     {
-        var errorCode = Convert.ToInt32(value: errorDict["code"]);
+        var errorCode = Convert.ToInt32(value: errorDict["code"].ToString());
         var errorMessage = Convert.ToString(errorDict["message"]);
         var errorData = errorDict.TryGetValue("data", out var value) ? value : null;
         Code = (RPCErrorCode)errorCode;
