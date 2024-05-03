@@ -12,13 +12,13 @@ public partial class RPCClient
     public delegate void RPCSuccessCallback(RPCResponse response);
     public delegate void RPCFailedCallback(RPCError error);
 
-    public string Invoke(RPCRequest request)
+    public string Invoke(RPCRequest request, bool async=true)
     {
-        _ = PostRequests([request], async: true);
+        _ = PostRequests([request], async: async);
         return request.Id ?? "";
     }
 
-    public string Invoke(string method, object paramsObj, RPCRequestCallback callback)
+    public string Invoke(string method, object paramsObj, RPCRequestCallback callback, bool async = true)
     {
         RPCRequest request = new RPCRequest
         {
@@ -26,10 +26,10 @@ public partial class RPCClient
             Params = paramsObj,
             Callback = callback
         };
-        return Invoke(request);
+        return Invoke(request, async: async);
     }
 
-    public string Invoke(string method, object paramsObj, RPCSuccessCallback successCallback, RPCFailedCallback failedCallback)
+    public string Invoke(string method, object paramsObj, RPCSuccessCallback successCallback, RPCFailedCallback failedCallback, bool async = true)
     {
         return Invoke(method, paramsObj, (response) =>
         {
@@ -41,6 +41,6 @@ public partial class RPCClient
             {
                 successCallback(response);
             }
-        });
+        }, async: async);
     }
 }
